@@ -1,0 +1,26 @@
+
+*****netargs environment setting
+setenv netargs 'setenv bootargs=console=ttyO0,115200n8 root=/dev/nfs nfsroot=192.168.100.200:/home/james/works/msv2/4kmsv-am4372/testFS,nolock rw ip=192.168.100.201:192.168.100.200:192.168.100.1:255.255.255.0:eth0:off'
+
+
+*****bootargs environment setting
+setenv bootargs 'console=ttyO0,115200n8 root=/dev/nfs nfsroot=192.168.100.200:/home/james/works/msv2/4kmsv-am4372/testFS,nolock rw ip=192.168.100.201:192.168.100.200:192.168.100.1:255.255.255.0::eth0:off'
+
+
+*****nfs environment setting
+sudo vim /etc/exports (environment setting file)
+sudo /etc/init.d/nfs-kernel-server restart (NFS server restart)
+
+*****MSV2 cross compiler
+arm-linux-gnueabihf-gcc
+
+
+
+
+
+ = 41968 (a3f0 hex)
+## Error: illegal character '='in variable name "bootargs=console=ttyO0,115200n8"
+
+
+*****ajax-post method
+http://pentode.tistory.com/251

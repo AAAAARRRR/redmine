@@ -1,0 +1,89 @@
+nfs 
+sudo minicom -b 115200 -D /dev/ttyUSB1 
+setenv bootcmd 'run netboot'
+setenv rootpath '/home/kyle/work/4kmsv-am4372/nfs'
+setenv fdtfile 'am4372-4kmcc.dtb'
+setenv netboot 'echo Booting from network ...; setenv autoload no; run netloadimage; run netloadfdt; run netargs; bootz ${loadaddr} - ${fdtaddr}'
+setenv netboot 'echo Booting from network ...; setenv autoload no; dhcp; tftp ${loadaddr} ${bootfile}; tftp ${fdtaddr} ${fdtfile}; run netargs; bootz ${loadaddr} - ${fdtaddr}'
+setenv netargs 'setenv bootargs console=${console} ${optargs} root=/dev/nfs nfsroot=${serverip}:${rootpath},${nfsopts} rw ip=${ipaddr}:${serverip}:${gatewayip}:${netmask}:${hostname}:eth0:off'
+
+
+setenv rootpath '/home/kyle/work/4kmsv-am4372/nfs-sysvinit'
+
+0x000000000000-0x000000080000 : "QSPI.U_BOOT"
+0x000000080000-0x000000100000 : "QSPI.U_BOOT.backup"
+0x000000100000-0x000000110000 : "QSPI.U-BOOT-dtb"
+0x000000110000-0x000000120000 : "QSPI.U_BOOT_ENV"
+0x000000120000-0x000000130000 : "QSPI.U-BOOT-ENV.backup"
+0x000000130000-0x000000930000 : "QSPI.KERNEL-08M"
+0x000000930000-0x000004000000 : "QSPI.RAMDISK-54M" 
+
+
+
+
+setenv ipaddr 192.168.100.101
+setenv serverip 192.168.100.11
+setenv gatewayip 192.168.100.1
+setenv netmask 255.255.255.0
+
+
+
+sf probe 0
+
+tftp 0x82000000 u-boot.bin
+sf erase 0x0 0x80000
+sf write 0x82000000 0x0 0x80000
+
+
+
+tftp 0x82000000 zImage
+sf erase 0x130000 0x400000
+sf write 0x82000000 0x130000 0x400000
+tftp 0x88000000 am4372-4kmcc_rev2.dtb
+tftp 0x88000000 am4372-4kmcc.dtb
+sf erase 0x100000 0x10000
+sf write 0x88000000 0x100000 0x10000
+
+
+tftp 0x88080000 ramdisk.gz
+sf erase 0x1000000 0xc00000 
+sf write 0x88080000 0x1000000 0xc00000
+
+setenv sfboot_nfs 'sf probe 0; sf read 0x82000000 0x130000 0x400000; sf read 0x88000000 0x100000 0x100000; run netargs ;bootz ${loadaddr} - ${fdtaddr}'
+
+setenv bootcmd 'run sfboot_nfs'
+
+
+netboot=echo Booting from network ...; setenv autoload no; dhcp; run netloadimage; run netloadfdt; run netargs; bootz ${loadaddr} - ${fdtaddr}
+ramargs=setenv bootargs console=${console} ${optargs} root=${ramroot} rootfstype=${ramrootfstype}
+setenv netramboot 'echo Booting from network ...; setenv autoload no;  run netloadimage; run netloadfdt; run netloadramdisk;  run ramargs2; bootz ${loadaddr} - ${fdtaddr}'
+setenv bootcmd 'run netramboot'
+
+
+netramboot
+setenv sfloadramdisk 'sf read 0x88080000 0x1000000 0xc00000'
+setenv netloadramdisk 'tftp 0x88080000 ramdisk.gz
+
+
+
+setenv ramargs2 'setenv bootargs console=${console} mem=800M initrd=0x88080000,11M root=/dev/ram rw ramdisk=102400' 
+
+setenv console 'ttyO0,115200n8'
+setenv console 'ttyO1,115200n8'
+setenv sfboot_ramdisk 'sf probe 0; sf read 0x82000000 0x130000 0x400000; sf read 0x88000000 0x100000 0x100000; sf read 0x88080000 0x1000000 0xc00000 ; run ramargs2 ;bootz ${loadaddr} - ${fdtaddr}'
+setenv bootcmd 'run sfboot_ramdisk' 
+
+
+fatload mmc 0 0x88000000 am4372-4kmcc_rev2.dtb
+fatload mmc 0 0x82000000 zImage
+
+
+
+setenv load_kernel 'fatload mmc 0 0x82000000 zImage'
+setenv load_dtb 'fatload mmc 0 0x88000000 am4372-4kmcc_rev2.dtb'
+setenv load_ramdisk 'fatload mmc 0 0x88080000 ramdisk.gz'
+
+setenv load_sdcard 'run load_kernel;run load_dtb;run load_ramdisk'
+setenv start_sdcard 'run load_sdcard ; run ramargs2; bootz ${loadaddr} - ${fdtaddr}'
+
+setenv start_sdcard 'run usbupgrade ;run load_sdcard ; run ramargs2; bootz ${loadaddr} - ${fdtaddr}'
