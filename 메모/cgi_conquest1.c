@@ -1,5 +1,5 @@
-#include <stdio.h>
-
+﻿#include <stdio.h>
+//
 
 //방문자 카운트 프로그램
 main()
